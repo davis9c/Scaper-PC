@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data perangkat</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; color: #172033; background: #f3f6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 20px; }
+    main { max-width: 560px; margin: 8vh auto; padding: 24px; background: white; border: 1px solid #e1e7f0; border-radius: 10px; }
+    h1 { margin-top: 0; font-size: 1.5rem; }
+    p { color: #596579; line-height: 1.5; }
+    label { display: block; margin: 14px 0 6px; font-weight: 600; }
+    input, button, .button-link { width: 100%; padding: 10px; border-radius: 6px; font: inherit; }
+    input { border: 1px solid #cbd5e1; }
+    button { margin-top: 16px; border: 0; color: white; background: #155eef; cursor: pointer; }
+    .button-link { display: block; margin-top: 12px; border: 1px solid #cbd5e1; color: #263650; background: #f8fafc; text-align: center; text-decoration: none; }
+    .form-divider { margin-top: 24px; padding-top: 8px; border-top: 1px solid #e1e7f0; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #status { min-height: 1.5em; margin-top: 12px; }
+    .notice { padding: 10px 12px; background: #eff8ff; border-radius: 7px; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Pengumpulan data perangkat</h1>
+    <p>Untuk mengirim hostname, user Windows, MAC address, dan port yang terbuka, unduh lalu jalankan skrip Windows pada perangkat ini. Skrip membaca informasi jaringan dan sistem perangkat ini, lalu mengirimkannya ke server.</p>
+    <p class="notice">Skrip membaca adapter jaringan aktif, port TCP yang mendengarkan, port UDP yang terikat, hostname Windows, dan akun Windows yang sedang menjalankan PowerShell. Jalankan dengan akun Windows biasa; jangan jalankan sebagai administrator kecuali diperlukan oleh kebijakan perangkat.</p>
+    <a id="download-launcher" class="button-link" href="#">Unduh peluncur Windows (.cmd) — klik dua kali</a>
+    <p class="muted">Peluncur memerlukan koneksi internet ke server aplikasi. Ia menjalankan kolektor PowerShell hanya untuk proses tersebut dan menghapus salinan sementara setelah selesai; Execution Policy Windows tidak diubah.</p>
+    <a id="download-collector" class="button-link" href="#">Unduh kolektor PowerShell (.ps1) — jalankan manual</a>
+    <p class="muted">Untuk menjalankan manual: buka PowerShell di folder unduhan dan jalankan <code>.\me-device-collector.ps1</code>, sesuai kebijakan perangkat Anda.</p>
+    <div class="form-divider">
+      <strong>Atau, kirim data browser</strong>
+      <p class="muted">Opsi ini tidak dapat membaca MAC address, port, hostname, atau user Windows. Untuk informasi lengkap gunakan skrip Windows di atas.</p>
+    </div>
+    <form id="collect-form">
+      <label for="device-name">Nama perangkat atau label aset (opsional)</label>
+      <input id="device-name" maxlength="100" autocomplete="off" placeholder="Contoh: Laptop Ruang Admin">
+      <button id="submit" type="submit">Kirim data perangkat</button>
+    </form>
+    <p id="status" role="status"></p>
+  </main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const token = location.pathname.split("/").pop();
+  $("download-launcher").href = `/collect/${encodeURIComponent(token)}/collector.cmd`;
+  $("download-collector").href = `/collect/${encodeURIComponent(token)}/collector.ps1`;
+  const status = $("status");
+  const browserName = () => {
+    const ua = navigator.userAgent;
+    if (/Edg\//.test(ua)) return "Microsoft Edge";
+    if (/Firefox\//.test(ua)) return "Firefox";
+    if (/OPR\//.test(ua)) return "Opera";
+    if (/Chrome\//.test(ua)) return "Chrome";
+    if (/Safari\//.test(ua)) return "Safari";
+    return "Browser lain";
+  };
+  function localAddresses() {
+    return new Promise((resolve) => {
+      if (!window.RTCPeerConnection) return resolve([]);
+      const found = new Set();
+      let peer;
+      const finish = () => {
+        if (peer) peer.close();
+        resolve([...found]);
+      };
+      try {
+        peer = new RTCPeerConnection({ iceServers: [] });
+        peer.createDataChannel("");
+        peer.onicecandidate = (event) => {
+          if (!event.candidate) return;
+          const match = event.candidate.candidate.match(/(?:\d{1,3}\.){3}\d{1,3}|(?:[0-9a-f]{0,4}:){2,7}[0-9a-f]{0,4}/i);
+          if (match && !match[0].endsWith(".local")) found.add(match[0]);
+        };
+        peer.createOffer().then((offer) => peer.setLocalDescription(offer)).catch(finish);
+        setTimeout(finish, 1800);
+      } catch { finish(); }
+    });
+  }
+  async function publicAddress() {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4500);
+      const response = await fetch("https://api.ipify.org?format=json", { signal: controller.signal });
+      clearTimeout(timeout);
+      if (!response.ok) return "";
+      const result = await response.json();
+      return result.ip || "";
+    } catch { return ""; }
+  }
+  $("collect-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = $("submit");
+    button.disabled = true;
+    status.textContent = "Mengumpulkan informasi perangkat...";
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    const [localIps, publicIp] = await Promise.all([localAddresses(), publicAddress()]);
+    const payload = {
+      device_name: $("device-name").value.trim(),
+      platform: navigator.userAgentData?.platform || navigator.platform || "Tidak tersedia",
+      browser: browserName(),
+      local_ips: localIps,
+      public_ip: publicIp,
+      details: {
+        user_agent: navigator.userAgent,
+        language: navigator.language || "",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "",
+        screen: `${screen.width}x${screen.height}`,
+        cores: navigator.hardwareConcurrency || "",
+        memory: navigator.deviceMemory || "",
+        touch: navigator.maxTouchPoints || 0,
+        connection: connection?.effectiveType || ""
+      }
+    };
+    try {
+      const response = await fetch(`/api/collect/${encodeURIComponent(token)}`, {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Data tidak berhasil disimpan.");
+      status.textContent = "Data perangkat berhasil dikirim. Terima kasih.";
+      $("collect-form").remove();
+    } catch (error) {
+      status.textContent = `Gagal mengirim data: ${error.message}`;
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+</body>
+</html>

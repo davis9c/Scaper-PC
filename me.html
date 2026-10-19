@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informasi PC</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: "Segoe UI", Arial, sans-serif;
+            color: #172033;
+            background: #edf2f8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-width: 320px;
+            min-height: 100vh;
+            min-height: 100svh;
+            overflow: hidden;
+        }
+
+        main {
+            width: min(100% - 28px, 1440px);
+            height: 100vh;
+            height: 100svh;
+            margin: 0 auto;
+            padding: 14px 0;
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr) auto;
+            gap: 10px;
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(1.35rem, 2.6vw, 1.9rem);
+        }
+
+        .subtitle, .privacy-note, footer {
+            margin: 0;
+            color: #596579;
+            font-size: 0.82rem;
+        }
+
+        .privacy-note {
+            padding: 8px 12px;
+            border: 1px solid #b8d8f5;
+            border-radius: 7px;
+            background: #eaf5ff;
+            line-height: 1.35;
+        }
+
+        #copy-status {
+            min-width: 90px;
+            color: #18794e;
+            text-align: right;
+            font-size: 0.8rem;
+        }
+
+        .grid {
+            min-height: 0;
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            grid-template-rows: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+        }
+
+        section {
+            min-width: 0;
+            min-height: 0;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #dfe6ef;
+            border-radius: 9px;
+            background: #fff;
+            box-shadow: 0 2px 8px #1720330a;
+        }
+
+        h2 {
+            flex: 0 0 auto;
+            margin: 0 0 8px;
+            font-size: 0.98rem;
+        }
+
+        dl {
+            min-height: 0;
+            margin: 0;
+            overflow: auto;
+        }
+
+        .info-row {
+            display: grid;
+            grid-template-columns: minmax(75px, 0.7fr) minmax(0, 1.3fr) auto;
+            align-items: start;
+            gap: 5px;
+            padding: 5px 0;
+            border-top: 1px solid #eef1f5;
+            font-size: 0.79rem;
+        }
+
+        .info-row:first-child { border-top: 0; }
+        dt { color: #596579; }
+        dd { min-width: 0; margin: 0; overflow-wrap: anywhere; font-weight: 600; }
+
+        button {
+            padding: 3px 7px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            background: #fff;
+            color: #34445c;
+            font: inherit;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
+
+        button:hover { background: #eff6ff; border-color: #8bbcf0; }
+        button:focus-visible { outline: 2px solid #2563eb; outline-offset: 2px; }
+        .empty { color: #7b8798; font-weight: 400; }
+
+        footer { text-align: right; }
+
+        @media (max-width: 800px) {
+            main { width: min(100% - 20px, 600px); padding: 10px 0; gap: 7px; }
+            .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
+            section { padding: 9px 10px; }
+            .info-row { grid-template-columns: minmax(65px, 0.65fr) minmax(0, 1.35fr) auto; gap: 4px; font-size: 0.72rem; }
+            button { padding: 2px 5px; font-size: 0.65rem; }
+        }
+
+        @media (max-height: 600px) {
+            main { padding: 7px 0; gap: 5px; }
+            .subtitle, .privacy-note, footer { font-size: 0.72rem; }
+            .privacy-note { padding: 5px 8px; }
+            section { padding: 7px 9px; }
+            h2 { margin-bottom: 4px; }
+            .info-row { padding: 3px 0; }
+        }
+
+        @media (max-width: 520px) {
+            .grid { grid-template-columns: 1fr 1fr; }
+            h1 { font-size: 1.2rem; }
+            .subtitle { font-size: 0.72rem; }
+            .info-row { grid-template-columns: 1fr auto; }
+            dt { grid-column: 1 / -1; }
+            dd { grid-column: 1; }
+            .info-row button { grid-column: 2; grid-row: 2; }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <header>
+            <div>
+                <h1>Informasi PC</h1>
+                <p class="subtitle">Identitas perangkat ini untuk keperluan maintenance</p>
+            </div>
+            <span id="copy-status" role="status" aria-live="polite"></span>
+        </header>
+
+        <p class="privacy-note">Informasi diambil oleh skrip lokal dari PC ini dan tidak dikirim ke internet. Port yang ditampilkan sedang mendengarkan/terikat secara lokal; firewall atau router dapat mencegah akses dari jaringan. Tombol Salin tersedia pada setiap informasi.</p>
+
+        <div class="grid">
+            <section aria-labelledby="identity-title">
+                <h2 id="identity-title">Identitas</h2>
+                <dl id="identity-info"></dl>
+            </section>
+            <section aria-labelledby="hardware-title">
+                <h2 id="hardware-title">Perangkat keras</h2>
+                <dl id="hardware-info"></dl>
+            </section>
+            <section aria-labelledby="network-title">
+                <h2 id="network-title">Alamat IP</h2>
+                <dl id="network-info"></dl>
+            </section>
+            <section aria-labelledby="mac-title">
+                <h2 id="mac-title">Alamat MAC</h2>
+                <dl id="mac-info"></dl>
+            </section>
+            <section aria-labelledby="ports-title">
+                <h2 id="ports-title">Port yang mendengarkan</h2>
+                <dl id="ports-info"></dl>
+            </section>
+            <section aria-labelledby="system-title">
+                <h2 id="system-title">Sistem</h2>
+                <dl id="system-info"></dl>
+            </section>
+        </div>
+
+        <footer id="updated-at"></footer>
+    </main>
+
+    <script>
+        (() => {
+            const encodedData = "__DEVICE_DATA_BASE64__";
+            const status = document.getElementById("copy-status");
+            let data;
+
+            const copyText = async (text, button) => {
+                try {
+                    if (navigator.clipboard?.writeText) {
+                        await navigator.clipboard.writeText(text);
+                    } else {
+                        const temporary = document.createElement("textarea");
+                        temporary.value = text;
+                        temporary.style.position = "fixed";
+                        temporary.style.opacity = "0";
+                        document.body.append(temporary);
+                        temporary.select();
+                        const copied = document.execCommand("copy");
+                        temporary.remove();
+                        if (!copied) throw new Error("Browser menolak akses clipboard.");
+                    }
+                    button.textContent = "Tersalin";
+                    status.textContent = "Informasi disalin.";
+                    window.setTimeout(() => { button.textContent = "Salin"; }, 1400);
+                } catch (error) {
+                    status.textContent = "Gagal menyalin. Izinkan akses clipboard browser.";
+                    console.error("Clipboard gagal:", error);
+                }
+            };
+
+            const renderRows = (containerId, entries) => {
+                const container = document.getElementById(containerId);
+                const rows = entries.length ? entries : [["Informasi", "Tidak tersedia"]];
+                for (const [label, value] of rows) {
+                    const row = document.createElement("div");
+                    row.className = "info-row";
+                    const term = document.createElement("dt");
+                    term.textContent = label;
+                    const description = document.createElement("dd");
+                    description.textContent = value || "Tidak tersedia";
+                    if (!value) description.className = "empty";
+                    const button = document.createElement("button");
+                    button.type = "button";
+                    button.textContent = "Salin";
+                    button.setAttribute("aria-label", `Salin ${label}`);
+                    button.addEventListener("click", () => copyText(value || "Tidak tersedia", button));
+                    row.append(term, description, button);
+                    container.append(row);
+                }
+            };
+
+            if (encodedData.startsWith("__DEVICE_DATA_")) {
+                document.querySelector(".privacy-note").textContent =
+                    "Jalankan jalankan-me.ps1 untuk mengambil informasi PC lokal dan membuka laporan ini. Halaman HTML saja tidak diizinkan membaca informasi sistem.";
+                return;
+            }
+
+            try {
+                const bytes = Uint8Array.from(atob(encodedData), (character) => character.charCodeAt(0));
+                data = JSON.parse(new TextDecoder().decode(bytes));
+            } catch (error) {
+                document.querySelector(".privacy-note").textContent = `Data PC tidak dapat dibaca: ${error.message}`;
+                return;
+            }
+
+            renderRows("identity-info", [
+                ["Nama PC", data.computerName],
+                ["User Windows", data.windowsUser]
+            ]);
+            renderRows("hardware-info", [
+                ["Prosesor", data.processors?.length ? data.processors.join("; ") : "Tidak tersedia"],
+                ["Core / logis", data.cpuCores],
+                ["RAM", data.memory],
+                ["Grafis", data.graphics?.length ? data.graphics.join("; ") : "Tidak tersedia"],
+                ["Penyimpanan", data.disks?.length ? data.disks.join("; ") : "Tidak tersedia"]
+            ]);
+            const ipEntries = [];
+            for (const item of data.networks || []) {
+                ipEntries.push(
+                    [`${item.name} · IPv4`, item.ipv4?.join(", ") || "Tidak ada alamat IPv4"],
+                    [`${item.name} · IPv6`, item.ipv6?.join(", ") || "Tidak ada alamat IPv6"]
+                );
+            }
+            renderRows("network-info", ipEntries);
+            renderRows("mac-info", data.networks?.map((item) => [
+                item.name,
+                item.mac || "Tidak tersedia"
+            ]) || []);
+            renderRows("ports-info", [
+                ["TCP mendengarkan", data.tcpPorts?.length ? data.tcpPorts.join(", ") : "Tidak ada port TCP"],
+                ["UDP terikat", data.udpPorts?.length ? data.udpPorts.join(", ") : "Tidak ada port UDP"]
+            ]);
+            renderRows("system-info", [
+                ["Sistem operasi", data.operatingSystem],
+                ["Versi", data.osVersion],
+                ["Arsitektur", data.architecture],
+                ["Waktu pemindaian", data.scannedAt]
+            ]);
+            if (data.errors?.length) {
+                const note = document.querySelector(".privacy-note");
+                note.textContent = `Sebagian informasi tidak berhasil dibaca: ${data.errors.join("; ")}`;
+                note.style.borderColor = "#efc36a";
+                note.style.background = "#fff8e8";
+                note.style.color = "#704d12";
+            }
+            document.getElementById("updated-at").textContent =
+                `Dipindai ${data.scannedAt} · Data hanya untuk sesi laporan ini`;
+        })();
+    </script>
+</body>
+
+</html>

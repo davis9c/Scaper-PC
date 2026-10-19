@@ -1,0 +1,19 @@
+services:
+  me:
+    build: .
+    container_name: me-device-management
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      USERGATE_API_BASE: "${USERGATE_API_BASE:-https://usergate.sandalgurun.web.id/api/v1}"
+      USERGATE_API_KEY: "${USERGATE_API_KEY:?Set USERGATE_API_KEY in .env}"
+      APP_PUBLIC_URL: "${APP_PUBLIC_URL:-}"
+      TRUST_PROXY: "${TRUST_PROXY:-false}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-false}"
+      DATABASE_PATH: /data/me.sqlite3
+    volumes:
+      - me-data:/data
+
+volumes:
+  me-data:

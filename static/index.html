@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Manajemen Perangkat</title>
+  <style>
+    :root { font-family: "Segoe UI", Arial, sans-serif; color: #172033; background: #f3f6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input, select { font: inherit; }
+    button { border: 0; border-radius: 6px; background: #155eef; color: white; padding: 9px 13px; cursor: pointer; }
+    button.secondary { background: #e8eef8; color: #263650; }
+    button.danger { background: #b42318; }
+    button:disabled { opacity: .5; cursor: wait; }
+    input, select { padding: 9px 10px; border: 1px solid #cbd5e1; border-radius: 6px; background: white; color: #172033; }
+    .shell { max-width: 1440px; margin: auto; padding: 24px; }
+    .panel { background: white; border: 1px solid #e1e7f0; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px #1720330a; }
+    .login { max-width: 430px; margin: 8vh auto; }
+    h1 { margin: 0 0 8px; font-size: 1.55rem; }
+    h2 { margin: 0 0 14px; font-size: 1.1rem; }
+    p { color: #596579; line-height: 1.5; }
+    label { display: block; margin: 12px 0 5px; font-weight: 600; font-size: .9rem; }
+    .login input { width: 100%; }
+    .login button { margin-top: 16px; width: 100%; }
+    .muted { color: #69778c; font-size: .88rem; }
+    .error { min-height: 1.35em; color: #b42318; }
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+    .topbar p { margin: 3px 0 0; }
+    .dashboard-nav { display: flex; gap: 8px; margin: 0 0 16px; border-bottom: 1px solid #dfe6ef; }
+    .nav-button { margin-bottom: -1px; border-radius: 6px 6px 0 0; color: #53627a; background: transparent; border-bottom: 2px solid transparent; }
+    .nav-button[aria-selected="true"] { color: #155eef; background: #fff; border-bottom-color: #155eef; }
+    .columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-row { display: flex; gap: 8px; }
+    .form-row input { flex: 1; min-width: 0; }
+    .link-list, .user-list { display: grid; gap: 9px; margin-top: 14px; }
+    .list-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; border-top: 1px solid #edf0f5; padding-top: 10px; }
+    .list-item:first-child { border-top: 0; }
+    .list-item small { display: block; color: #68758a; margin-top: 4px; overflow-wrap: anywhere; }
+    .status { display: inline-block; padding: 3px 7px; border-radius: 20px; background: #eef2f7; font-size: .75rem; }
+    .status.PENDING { background: #fff4ce; color: #7a4b00; }
+    .status.ACTIVE { background: #dcfae6; color: #067647; }
+    .user-access { min-width: 180px; display: flex; align-items: center; gap: 6px; }
+    .user-access select { min-width: 90px; padding: 6px; font-size: .8rem; }
+    .user-access button { padding: 6px 9px; font-size: .78rem; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .toolbar input { flex: 1; min-width: 180px; }
+    .table-wrap { overflow: auto; border: 1px solid #e7ebf2; border-radius: 7px; }
+    table { width: 100%; min-width: 700px; border-collapse: collapse; table-layout: fixed; font-size: .8rem; }
+    th, td { text-align: left; border-bottom: 1px solid #edf0f5; padding: 8px 10px; vertical-align: middle; }
+    th { background: #f8fafc; color: #43516a; position: sticky; top: 0; font-size: .75rem; }
+    tbody tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #f8fbff; }
+    .col-time { width: 155px; }
+    .col-device { width: 190px; }
+    .col-location { width: 145px; }
+    .col-public-ip { width: 130px; }
+    .col-local-ip { width: 150px; }
+    .col-source { width: 145px; }
+    .cell-main { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell-sub { display: block; margin-top: 3px; color: #69778c; font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .details-button { padding: 5px 9px; font-size: .76rem; }
+    .device-dialog { width: min(760px, calc(100% - 24px)); max-width: 760px; max-height: min(85vh, 850px); padding: 0; overflow: hidden; border: 1px solid #d8e0eb; border-radius: 12px; color: #172033; box-shadow: 0 24px 70px #17203340; }
+    .device-dialog::backdrop { background: #10203b80; backdrop-filter: blur(2px); }
+    .dialog-content { display: flex; max-height: min(85vh, 850px); flex-direction: column; }
+    .dialog-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 12px; border-bottom: 1px solid #edf0f5; }
+    .dialog-header h2 { margin: 0; }
+    .dialog-header p { margin: 4px 0 0; }
+    .icon-button { flex: 0 0 auto; padding: 5px 10px; color: #34445c; background: #eef2f7; font-size: 1.1rem; }
+    .dialog-toolbar { display: flex; align-items: center; gap: 12px; padding: 10px 20px; }
+    .copy-status { color: #067647; font-size: .82rem; }
+    .detail-list { overflow: auto; padding: 0 20px 18px; }
+    .detail-item { display: grid; grid-template-columns: minmax(120px, .7fr) minmax(0, 1.5fr) auto; align-items: start; gap: 10px; padding: 10px 0; border-top: 1px solid #edf0f5; }
+    .detail-label { color: #596579; font-size: .83rem; }
+    .detail-value { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; font-size: .84rem; }
+    .copy-button { padding: 4px 8px; color: #34445c; background: #eef2f7; font-size: .74rem; }
+    .group-title { margin: 15px 0 6px; font-size: .95rem; }
+    .pager { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+    .hidden { display: none !important; }
+    .privacy { padding: 10px 12px; background: #eff8ff; border-radius: 7px; font-size: .83rem; }
+    @media (max-width: 760px) { .shell { padding: 13px; } .columns { grid-template-columns: 1fr; } .topbar { align-items: flex-start; } .panel { padding: 15px; } }
+    @media (max-width: 520px) { .detail-item { grid-template-columns: minmax(0, 1fr) auto; gap: 5px 8px; } .detail-label { grid-column: 1; } .detail-value { grid-column: 1; } .copy-button { grid-column: 2; grid-row: 1 / span 2; } .dialog-header, .dialog-toolbar { padding-left: 14px; padding-right: 14px; } .detail-list { padding: 0 14px 14px; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section id="login-panel" class="panel login">
+      <h1>Manajemen Perangkat</h1>
+      <p>Masuk menggunakan akun UserGate. Pengguna pertama yang berhasil masuk menjadi superadmin lokal; pengguna berikutnya perlu diaktifkan oleh superadmin.</p>
+      <form id="login-form">
+        <label for="username">Username UserGate</label>
+        <input id="username" name="username" autocomplete="username" required>
+        <label for="password">Password UserGate</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required>
+        <button type="submit">Masuk</button>
+      </form>
+      <div id="login-message" class="error" role="status"></div>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <header class="topbar">
+        <div><h1>Manajemen Perangkat</h1><p id="welcome" class="muted"></p></div>
+        <button id="logout-button" class="secondary">Keluar</button>
+      </header>
+      <div id="dashboard-error" class="error" role="alert"></div>
+      <nav class="dashboard-nav" aria-label="Navigasi dashboard">
+        <button type="button" class="nav-button" data-view="devices-view" aria-selected="true">Data perangkat</button>
+        <button type="button" class="nav-button admin-only hidden" data-view="admin-view" aria-selected="false">Manajemen lokal</button>
+      </nav>
+      <section id="devices-view" class="panel dashboard-view">
+        <h2>Data perangkat</h2>
+        <div class="toolbar">
+          <input id="search" placeholder="Cari di halaman ini...">
+          <label for="group-by" style="margin:0">Kelompokkan:</label>
+          <select id="group-by">
+            <option value="">Tidak dikelompokkan</option>
+            <option value="link_label">Link / lokasi</option>
+            <option value="device_name">Nama perangkat</option>
+            <option value="platform">Sistem / platform</option>
+            <option value="browser">Browser</option>
+            <option value="hostname">Hostname</option>
+            <option value="windows_user">User Windows</option>
+            <option value="mac_addresses">MAC address</option>
+            <option value="public_ip">IP publik</option>
+            <option value="local_ips">IP lokal</option>
+          </select>
+          <button id="refresh-button" class="secondary">Muat ulang</button>
+        </div>
+        <div id="devices"></div>
+        <div class="pager">
+          <button id="previous-page" class="secondary">Sebelumnya</button>
+          <span id="page-label" class="muted"></span>
+          <button id="next-page" class="secondary">Berikutnya</button>
+        </div>
+      </section>
+      <section id="admin-view" class="dashboard-view hidden admin-only">
+        <div class="columns">
+          <section class="panel">
+            <h2>Link pengumpulan</h2>
+            <p class="muted">Bagikan link ke perangkat yang akan didata. Setiap pengiriman menambahkan satu baris data.</p>
+            <form id="link-form" class="form-row">
+              <input id="link-label" maxlength="100" placeholder="Nama link / lokasi" required>
+              <button type="submit">Buat link</button>
+            </form>
+            <div id="created-link" class="privacy hidden"></div>
+            <div id="links" class="link-list"></div>
+          </section>
+          <section class="panel">
+            <h2>Manajemen user lokal</h2>
+            <p class="muted">Hanya superadmin lokal yang dapat membuka bagian ini. Identitas dan autentikasi tetap dikelola UserGate; pengaturan di bawah hanya berlaku untuk akses di aplikasi ini.</p>
+            <div id="users" class="user-list"></div>
+          </section>
+        </div>
+      </section>
+    </section>
+  </main>
+  <dialog id="device-dialog" class="device-dialog" aria-labelledby="device-dialog-title">
+    <div class="dialog-content">
+      <header class="dialog-header">
+        <div>
+          <h2 id="device-dialog-title">Detail perangkat</h2>
+          <p id="device-dialog-subtitle" class="muted"></p>
+        </div>
+        <button id="close-device-dialog" class="icon-button" type="button" aria-label="Tutup detail">×</button>
+      </header>
+      <div class="dialog-toolbar">
+        <button id="copy-all-device-data" type="button">Salin semua data</button>
+        <span id="device-copy-status" class="copy-status" role="status" aria-live="polite"></span>
+      </div>
+      <div id="device-detail-list" class="detail-list"></div>
+    </div>
+  </dialog>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  let currentPage = 1;
+  let totalPages = 1;
+  let devices = [];
+  let isSuperadmin = false;
+  let activeDialogDevice = null;
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  })[char]);
+  async function api(path, options = {}) {
+    const response = await fetch(path, {
+      credentials: "same-origin",
+      ...options,
+      headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error || "Permintaan gagal.");
+    return result;
+  }
+  function showError(message) { $("dashboard-error").textContent = message || ""; }
+  async function refreshDashboard() {
+    const devicesResult = await api(`/api/admin/devices?page=${currentPage}&per_page=50`);
+    devices = devicesResult.devices;
+    totalPages = devicesResult.meta.total_pages;
+    $("page-label").textContent = `Halaman ${devicesResult.meta.page} / ${totalPages} · ${devicesResult.meta.total} perangkat`;
+    $("previous-page").disabled = currentPage <= 1;
+    $("next-page").disabled = currentPage >= totalPages;
+    renderDevices();
+    showError("");
+  }
+  async function loadAdminManagement() {
+    if (!isSuperadmin) return;
+    const [usersResult, linksResult] = await Promise.all([api("/api/admin/users"), api("/api/admin/links")]);
+    renderUsers(usersResult.users);
+    renderLinks(linksResult.links);
+  }
+  function renderUsers(users) {
+    $("users").innerHTML = users.map((user) => `<div class="list-item">
+      <div><strong>${escapeHtml(user.full_name || user.username)}</strong>
+        <small>${escapeHtml(user.username)} · ${escapeHtml(user.email || "tanpa email")} · login terakhir ${escapeHtml(user.last_login_at || "belum pernah")}</small></div>
+      <div class="user-access">
+        <select aria-label="Peran lokal ${escapeHtml(user.username)}" data-user-role>
+          <option value="USER" ${user.role === "USER" ? "selected" : ""}>User</option>
+          <option value="SUPERADMIN" ${user.role === "SUPERADMIN" ? "selected" : ""}>Superadmin</option>
+        </select>
+        <select aria-label="Status lokal ${escapeHtml(user.username)}" data-user-status>
+          <option value="PENDING" ${user.status === "PENDING" ? "selected" : ""}>Menunggu</option>
+          <option value="ACTIVE" ${user.status === "ACTIVE" ? "selected" : ""}>Aktif</option>
+          <option value="DISABLED" ${user.status === "DISABLED" ? "selected" : ""}>Nonaktif</option>
+        </select>
+        <button type="button" data-save-user="${escapeHtml(user.id)}">Simpan</button>
+      </div>
+    </div>`).join("") || '<p class="muted">Belum ada pengguna.</p>';
+    $("users").querySelectorAll("button[data-save-user]").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      const row = button.closest(".list-item");
+      try {
+        await api(`/api/admin/users/${button.dataset.saveUser}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            role: row.querySelector("[data-user-role]").value,
+            status: row.querySelector("[data-user-status]").value
+          })
+        });
+        await loadAdminManagement();
+      } catch (error) { showError(error.message); button.disabled = false; }
+    }));
+  }
+  function renderLinks(links) {
+    $("links").innerHTML = links.map((link) => `<div class="list-item">
+      <div><strong>${escapeHtml(link.label)}</strong><small>${link.device_count} data · dibuat ${escapeHtml(link.created_at)}${link.revoked_at ? " · dicabut" : ""}</small></div>
+      ${link.revoked_at ? '<span class="status">Dicabut</span>' : `<button class="danger" data-link-id="${escapeHtml(link.id)}">Cabut</button>`}
+    </div>`).join("") || '<p class="muted">Belum ada link pengumpulan.</p>';
+    $("links").querySelectorAll("button[data-link-id]").forEach((button) => button.addEventListener("click", async () => {
+      if (!confirm("Cabut link ini? Link tidak dapat dipakai untuk pengumpulan baru.")) return;
+      try {
+        await api(`/api/admin/links/${button.dataset.linkId}`, { method: "DELETE" });
+        await loadAdminManagement();
+      } catch (error) { showError(error.message); }
+    }));
+  }
+  async function copyText(value) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const temporary = document.createElement("textarea");
+    temporary.value = value;
+    temporary.setAttribute("readonly", "");
+    temporary.style.position = "fixed";
+    temporary.style.opacity = "0";
+    document.body.append(temporary);
+    temporary.select();
+    const copied = document.execCommand("copy");
+    temporary.remove();
+    if (!copied) throw new Error("Browser menolak akses clipboard.");
+  }
+  function makeDeviceDetails(device) {
+    const details = device.details || {};
+    const entries = [
+      ["ID data", device.id],
+      ["Waktu pengumpulan", device.collected_at],
+      ["Link / lokasi", device.link_label],
+      ["Nama perangkat", device.device_name],
+      ["Hostname", device.hostname],
+      ["User Windows aktif", device.windows_user],
+      ["Sistem / platform", device.platform],
+      ["Browser / collector", device.browser],
+      ["IP lokal", device.local_ips],
+      ["IP publik", device.public_ip],
+      ["IP teramati server", device.server_ip],
+      ["MAC address", device.mac_addresses],
+      ["Port TCP terbuka", device.tcp_ports],
+      ["Port UDP terbuka", device.udp_ports],
+      ["Ukuran layar", details.screen],
+      ["Koneksi jaringan", details.connection],
+      ["User-agent", details.user_agent],
+      ["Bahasa", details.language],
+      ["Zona waktu", details.timezone],
+      ["Jumlah core", details.cores],
+      ["Memori perangkat", details.memory],
+      ["Touch points", details.touch],
+      ["Waktu pindai", details.scanned_at],
+      ["Peringatan pengumpulan", details.errors]
+    ];
+    for (const [key, value] of Object.entries(details)) {
+      if (![
+        "screen", "connection", "user_agent", "language", "timezone",
+        "cores", "memory", "touch", "scanned_at", "errors"
+      ].includes(key)) {
+        entries.push([`Detail: ${key}`, value]);
+      }
+    }
+    return entries.map(([label, value]) => {
+      let text;
+      if (value === null || value === undefined || value === "") {
+        text = "Tidak tersedia";
+      } else if (Array.isArray(value)) {
+        text = value.map((item) => item && typeof item === "object"
+          ? Object.entries(item).map(([key, part]) => `${key}: ${part}`).join(" · ")
+          : String(item)).join("\n");
+      } else if (typeof value === "object") {
+        text = JSON.stringify(value, null, 2);
+      } else {
+        text = String(value);
+      }
+      return { label, text };
+    });
+  }
+  async function copyDeviceValue(value, button) {
+    const status = $("device-copy-status");
+    try {
+      await copyText(value);
+      if (button) {
+        const previousText = button.textContent;
+        button.textContent = "Tersalin";
+        window.setTimeout(() => { button.textContent = previousText; }, 1200);
+      }
+      status.textContent = "Data berhasil disalin.";
+    } catch (error) {
+      status.textContent = `Gagal menyalin: ${error.message}`;
+    }
+  }
+  function showDeviceDetails(device) {
+    activeDialogDevice = device;
+    $("device-dialog-title").textContent = device.hostname || device.device_name || "Detail perangkat";
+    $("device-dialog-subtitle").textContent = `${device.link_label || "Tanpa lokasi"} · ${device.collected_at || ""}`;
+    $("device-copy-status").textContent = "";
+    const list = $("device-detail-list");
+    list.replaceChildren();
+    for (const { label, text } of makeDeviceDetails(device)) {
+      const row = document.createElement("div");
+      row.className = "detail-item";
+      const name = document.createElement("span");
+      name.className = "detail-label";
+      name.textContent = label;
+      const value = document.createElement("pre");
+      value.className = "detail-value";
+      value.textContent = text;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "copy-button";
+      button.textContent = "Salin";
+      button.addEventListener("click", () => copyDeviceValue(text, button));
+      row.append(name, value, button);
+      list.append(row);
+    }
+    $("device-dialog").showModal();
+  }
+  function rowMarkup(device) {
+    const name = device.hostname || device.device_name || "Perangkat";
+    const secondary = device.windows_user || device.device_name || device.platform || "";
+    return `<tr>
+      <td><span class="cell-main">${escapeHtml(device.collected_at)}</span></td>
+      <td><strong class="cell-main">${escapeHtml(name)}</strong><small class="cell-sub">${escapeHtml(secondary)}</small></td>
+      <td><span class="cell-main">${escapeHtml(device.link_label || "—")}</span></td>
+      <td><span class="cell-main">${escapeHtml(device.public_ip || "—")}</span></td>
+      <td><span class="cell-main">${escapeHtml((device.local_ips || []).join(", ") || "—")}</span></td>
+      <td><span class="cell-main">${escapeHtml(device.browser || "Browser")}</span><small class="cell-sub">${escapeHtml(device.server_ip || "IP server tidak tersedia")}</small></td>
+      <td><button type="button" class="details-button" data-device-id="${escapeHtml(device.id)}">Detail</button></td>
+    </tr>`;
+  }
+  function tableMarkup(rows) {
+    return `<div class="table-wrap"><table><thead><tr>
+      <th class="col-time">Waktu</th><th class="col-device">Perangkat / user</th>
+      <th class="col-location">Link / lokasi</th><th class="col-public-ip">IP publik</th>
+      <th class="col-local-ip">IP lokal</th><th class="col-source">Sumber / IP server</th><th>Aksi</th>
+    </tr></thead><tbody>${rows.map(rowMarkup).join("")}</tbody></table></div>`;
+  }
+  function renderDevices() {
+    const search = $("search").value.trim().toLowerCase();
+    const rows = devices.filter((device) => JSON.stringify(device).toLowerCase().includes(search));
+    const groupKey = $("group-by").value;
+    if (!groupKey) {
+      $("devices").innerHTML = rows.length ? tableMarkup(rows) : '<p class="muted">Tidak ada data pada halaman ini.</p>';
+    } else {
+      const groups = new Map();
+      for (const device of rows) {
+        const raw = groupKey === "local_ips" ? (device.local_ips || []).join(", ") :
+          groupKey === "mac_addresses" ? (device.mac_addresses || []).map((item) => item.mac).join(", ") : device[groupKey];
+        const name = raw || "Tidak diketahui";
+        if (!groups.has(name)) groups.set(name, []);
+        groups.get(name).push(device);
+      }
+      $("devices").innerHTML = groups.size ? [...groups].map(([name, group]) =>
+        `<h3 class="group-title">${escapeHtml(name)} <span class="muted">(${group.length})</span></h3>${tableMarkup(group)}`
+      ).join("") : '<p class="muted">Tidak ada data pada halaman ini.</p>';
+    }
+    $("devices").querySelectorAll("button[data-device-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const device = devices.find((item) => item.id === button.dataset.deviceId);
+        if (device) showDeviceDetails(device);
+      });
+    });
+  }
+  async function enterDashboard(user) {
+    $("login-panel").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+    isSuperadmin = user.role === "SUPERADMIN";
+    document.querySelectorAll(".admin-only").forEach((panel) => panel.classList.toggle("hidden", !isSuperadmin));
+    $("welcome").textContent = `${user.full_name || user.username} · ${isSuperadmin ? "Superadmin lokal" : "Pengguna aktif"}`;
+    await refreshDashboard();
+  }
+  async function selectView(viewId) {
+    if (viewId === "admin-view" && !isSuperadmin) return;
+    document.querySelectorAll(".dashboard-view").forEach((view) => {
+      view.classList.toggle("hidden", view.id !== viewId);
+    });
+    document.querySelectorAll(".dashboard-nav [data-view]").forEach((button) => {
+      button.setAttribute("aria-selected", String(button.dataset.view === viewId));
+    });
+    if (viewId === "admin-view") {
+      try {
+        await loadAdminManagement();
+        showError("");
+      } catch (error) {
+        showError(error.message);
+      }
+    }
+  }
+  document.querySelectorAll(".dashboard-nav [data-view]").forEach((button) => {
+    button.addEventListener("click", () => selectView(button.dataset.view));
+  });
+  $("login-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector("button");
+    button.disabled = true;
+    $("login-message").textContent = "";
+    try {
+      const result = await api("/api/login", { method: "POST", body: JSON.stringify({
+        username: $("username").value, password: $("password").value
+      }) });
+      await enterDashboard(result.user);
+    } catch (error) { $("login-message").textContent = error.message; }
+    finally { button.disabled = false; }
+  });
+  $("link-form").addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const button = event.currentTarget.querySelector("button");
+    button.disabled = true;
+    try {
+      const result = await api("/api/admin/links", { method: "POST", body: JSON.stringify({ label: $("link-label").value }) });
+      $("created-link").classList.remove("hidden");
+      $("created-link").innerHTML = `Link siap dibagikan: <a href="${escapeHtml(result.link.url)}">${escapeHtml(result.link.url)}</a>
+        <button type="button" id="copy-link" class="secondary">Salin</button>`;
+      $("copy-link").addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(result.link.url); $("copy-link").textContent = "Tersalin"; }
+        catch { $("copy-link").textContent = "Salin manual dari tautan"; }
+      });
+      $("link-label").value = "";
+      await loadAdminManagement();
+    } catch (error) { showError(error.message); }
+    finally { button.disabled = false; }
+  });
+  $("logout-button").addEventListener("click", async () => {
+    try { await api("/api/logout", { method: "POST", body: "{}" }); }
+    finally { location.reload(); }
+  });
+  $("refresh-button").addEventListener("click", () => refreshDashboard().catch((error) => showError(error.message)));
+  $("close-device-dialog").addEventListener("click", () => $("device-dialog").close());
+  $("device-dialog").addEventListener("click", (event) => {
+    if (event.target === $("device-dialog")) $("device-dialog").close();
+  });
+  $("copy-all-device-data").addEventListener("click", () => {
+    if (!activeDialogDevice) return;
+    const allData = makeDeviceDetails(activeDialogDevice)
+      .map(({ label, text }) => `${label}: ${text}`)
+      .join("\n");
+    copyDeviceValue(allData, $("copy-all-device-data"));
+  });
+  $("previous-page").addEventListener("click", () => { if (currentPage > 1) { currentPage--; refreshDashboard().catch((error) => showError(error.message)); } });
+  $("next-page").addEventListener("click", () => { if (currentPage < totalPages) { currentPage++; refreshDashboard().catch((error) => showError(error.message)); } });
+  $("search").addEventListener("input", renderDevices);
+  $("group-by").addEventListener("change", renderDevices);
+  api("/api/me").then(({ user }) => enterDashboard(user)).catch(() => {});
+})();
+</script>
+</body>
+</html>
