@@ -55,11 +55,14 @@
     .col-device { width: 190px; }
     .col-location { width: 145px; }
     .col-public-ip { width: 130px; }
-    .col-local-ip { width: 150px; }
+    .col-local-ip { width: 190px; }
     .col-source { width: 145px; }
+    .cell-layout { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .cell-content { flex: 1; min-width: 0; }
     .cell-main { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .cell-sub { display: block; margin-top: 3px; color: #69778c; font-size: .72rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .details-button { padding: 5px 9px; font-size: .76rem; }
+    .copy-cell-button { flex: 0 0 auto; padding: 4px 6px; color: #34445c; background: #eef2f7; font-size: .68rem; }
     .device-dialog { width: min(760px, calc(100% - 24px)); max-width: 760px; max-height: min(85vh, 850px); padding: 0; overflow: hidden; border: 1px solid #d8e0eb; border-radius: 12px; color: #172033; box-shadow: 0 24px 70px #17203340; }
     .device-dialog::backdrop { background: #10203b80; backdrop-filter: blur(2px); }
     .dialog-content { display: flex; max-height: min(85vh, 850px); flex-direction: column; }
@@ -109,6 +112,7 @@
       </nav>
       <section id="devices-view" class="panel dashboard-view">
         <h2>Data perangkat</h2>
+        <span id="table-copy-status" class="copy-status" role="status" aria-live="polite"></span>
         <div class="toolbar">
           <input id="search" placeholder="Cari di halaman ini...">
           <label for="group-by" style="margin:0">Kelompokkan:</label>
@@ -321,8 +325,7 @@
       return { label, text };
     });
   }
-  async function copyDeviceValue(value, button) {
-    const status = $("device-copy-status");
+  async function copyDeviceValue(value, button, status = $("device-copy-status")) {
     try {
       await copyText(value);
       if (button) {
@@ -361,16 +364,30 @@
     }
     $("device-dialog").showModal();
   }
+  function copyableCellMarkup(label, main, secondary, value) {
+    return `<td><div class="cell-layout"><div class="cell-content">
+      <span class="cell-main">${escapeHtml(main)}</span>
+      ${secondary ? `<small class="cell-sub">${escapeHtml(secondary)}</small>` : ""}
+    </div><button type="button" class="copy-cell-button" data-copy-value="${escapeHtml(value)}"
+      aria-label="Salin ${escapeHtml(label)}">Salin</button></div></td>`;
+  }
+  function localIpv4Addresses(addresses) {
+    return (addresses || []).filter((address) =>
+      /^(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d)$/.test(address)
+    );
+  }
   function rowMarkup(device) {
     const name = device.hostname || device.device_name || "Perangkat";
     const secondary = device.windows_user || device.device_name || device.platform || "";
+    const localIps = device.local_ips || [];
+    const localIpv4Text = localIpv4Addresses(localIps).join(", ") || "—";
     return `<tr>
-      <td><span class="cell-main">${escapeHtml(device.collected_at)}</span></td>
-      <td><strong class="cell-main">${escapeHtml(name)}</strong><small class="cell-sub">${escapeHtml(secondary)}</small></td>
-      <td><span class="cell-main">${escapeHtml(device.link_label || "—")}</span></td>
-      <td><span class="cell-main">${escapeHtml(device.public_ip || "—")}</span></td>
-      <td><span class="cell-main">${escapeHtml((device.local_ips || []).join(", ") || "—")}</span></td>
-      <td><span class="cell-main">${escapeHtml(device.browser || "Browser")}</span><small class="cell-sub">${escapeHtml(device.server_ip || "IP server tidak tersedia")}</small></td>
+      ${copyableCellMarkup("Waktu", device.collected_at || "—", "", device.collected_at || "—")}
+      ${copyableCellMarkup("Perangkat / user", name, secondary, [name, secondary].filter(Boolean).join("\n"))}
+      ${copyableCellMarkup("Link / lokasi", device.link_label || "—", "", device.link_label || "—")}
+      ${copyableCellMarkup("IP publik", device.public_ip || "—", "", device.public_ip || "—")}
+      ${copyableCellMarkup("IP lokal", localIpv4Text, "", localIpv4Text)}
+      ${copyableCellMarkup("Sumber / IP server", device.browser || "Browser", device.server_ip || "IP server tidak tersedia", [device.browser || "Browser", device.server_ip || "IP server tidak tersedia"].join("\n"))}
       <td><button type="button" class="details-button" data-device-id="${escapeHtml(device.id)}">Detail</button></td>
     </tr>`;
   }
@@ -405,6 +422,11 @@
         const device = devices.find((item) => item.id === button.dataset.deviceId);
         if (device) showDeviceDetails(device);
       });
+    });
+    $("devices").querySelectorAll("button[data-copy-value]").forEach((button) => {
+      button.addEventListener("click", () =>
+        copyDeviceValue(button.dataset.copyValue, button, $("table-copy-status"))
+      );
     });
   }
   async function enterDashboard(user) {
